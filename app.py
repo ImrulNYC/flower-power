@@ -12,10 +12,10 @@ def load_dataset_from_local():
     dataset_path = "data/language-of-flowers.csv"
     try:
         data = pd.read_csv(dataset_path, quotechar='"', encoding='utf-8-sig', on_bad_lines='skip')
-        data.columns = data.columns.str.strip()  # Clean column names
+        data.columns = data.columns.str.strip()  
         return data
     except FileNotFoundError:
-        st.error("Dataset file not found.")
+        st.error("Dataset file not found. Please ensure the 'language-of-flowers.csv' file is present in the 'data' folder.")
         return None
     except pd.errors.ParserError as e:
         st.error(f"Error during dataset parsing: {e}")
@@ -31,15 +31,13 @@ def generate_flower_info(flower_name, flower_info_dict, gpt2_pipeline):
     return flower_name, flower_description, limited_output
 
 # Function to load flower image
-# Function to load flower image from a public URL
 def load_flower_image(flower_name):
-    base_url = "https://github.com/ImrulNYC/flower-power/tree/cb983695c147e0a3c36e09eeb7e119ce418fdefc/data/Flower_images/"
+    base_url = "data/Flower_images/"
     formatted_name = flower_name.replace(' ', '_').lower()
     image_path_with_color = f"{base_url}{formatted_name}.jpg"
     image_path_without_color = f"{base_url}{formatted_name.split('_')[-1]}.jpg"
     image_path_alternative = f"{base_url}{formatted_name.split('_')[-1]}_{formatted_name.split('_')[0]}.jpg"
 
-   
     try:
         response = requests.head(image_path_with_color)
         if response.status_code == 200:
@@ -55,7 +53,7 @@ def load_flower_image(flower_name):
 
     return None
 
-
+# Main app code
 
 def developer_info():
     st.markdown(
@@ -89,7 +87,7 @@ def developer_info():
         unsafe_allow_html=True
     )
 def streamlit_app():
-    
+    # Apply custom styles for a fancy UI
     st.markdown(
         """
         <style>
@@ -130,14 +128,14 @@ def streamlit_app():
     )
 
     st.markdown("<div class='main-title'>Flower Power </div>", unsafe_allow_html=True)
-    st.markdown("<div class='sub-title'>Welcome to the Language of Flowers, Flower Recognition App .</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sub-title'>.</div>", unsafe_allow_html=True)
 
-            
+            # Add flower recognition options
     col1, col2 = st.columns(2)
     with col1:
         st.markdown(
         """
-        <a href="google.com" target="_blank">
+        <a href="https://example.com/pre-trained-flower-recognition" target="_blank">
             <button style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; text-decoration: underline;">
                 Pre-trained Flower Recognition
             </button>
@@ -148,7 +146,7 @@ def streamlit_app():
     with col2:
         st.markdown(
         """
-        <a href="google.com" target="_blank">
+        <a href="https://example.com/flower-recognition-from-scratch" target="_blank">
             <button style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; text-decoration: underline;">
                 Flower Recognition from Scratch
             </button>
@@ -157,25 +155,25 @@ def streamlit_app():
         unsafe_allow_html=True
     )
 
-    
+    # Load dataset from local file
     data = load_dataset_from_local()
     if data is not None:
-        
+        # Creating a combined key with color and flower name
         data['Flower'] = data['Color'].fillna('') + ' ' + data['Flower']
         flower_info_dict = dict(zip(data['Flower'].str.strip().str.lower(), data['Meaning']))
         meaning_info_dict = dict(zip(data['Meaning'].str.strip().str.lower(), data['Flower']))
-        
+        st.markdown("<div class='info-box' style='background-color: #ffecb3; border-color: #ffb300;'>Dataset loaded successfully.</div>", unsafe_allow_html=True)
 
-        # Initialize GPT-2
+        # Initialize GPT-2 for text generation
         gpt2_model = GPT2LMHeadModel.from_pretrained("gpt2")
         gpt2_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
         gpt2_pipeline = pipeline("text-generation", model=gpt2_model, tokenizer=gpt2_tokenizer)
 
-        # User input 
+        # User input to get flower name with autocomplete suggestion
         flower_names = list(flower_info_dict.keys())
         flower_name = st.selectbox("Enter a flower name (e.g., 'Red Rose'):", options=["None"] + sorted(flower_names), index=0, key='flower').strip().lower()
         
-        # Displaying information option 2
+        # Display information for the selected flower name
         if flower_name != "none":
             if flower_name in flower_info_dict:
                 flower_name, flower_description, generated_info = generate_flower_info(flower_name, flower_info_dict, gpt2_pipeline)
@@ -208,14 +206,14 @@ def streamlit_app():
                 st.markdown(
                     f"<div class='info-box' style='background-color: #e8f5e9; border-color: #66bb6a;'>"
                     f"<div class='info-title'>Flower associated with '{meaning.title()}':</div>"
-                    f"<div class='info-content'><strong>Flower name: </strong>: {matching_flower.title()}</div>"
+                    f"<div class='info-content'><strong>Flower</strong>: {matching_flower.title()}</div>"
                     f"</div>",
                     unsafe_allow_html=True
                 )
             else:
-                st.markdown(f"<div class='info-box' style='background-color: #ffccbc; border-color: #ff7043;'>Sorry,no flower associated with the meaning: {meaning.title()}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='info-box' style='background-color: #ffccbc; border-color: #ff7043;'>Sorry, we don't have a flower associated with the meaning: {meaning.title()}</div>", unsafe_allow_html=True)
     else:
-        st.markdown("<div class='info-box' style='background-color: #ffccbc; border-color: #ff7043;'>dataste not loading.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='info-box' style='background-color: #ffccbc; border-color: #ff7043;'>There was an issue with loading the dataset.</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     st.sidebar.title("Navigation")
