@@ -15,7 +15,7 @@ def load_dataset_from_local():
         data.columns = data.columns.str.strip()  # Clean column names
         return data
     except FileNotFoundError:
-        st.error("Dataset file not found. Please ensure the 'language-of-flowers.csv' file is present in the 'data' folder.")
+        st.error("Dataset file not found.")
         return None
     except pd.errors.ParserError as e:
         st.error(f"Error during dataset parsing: {e}")
@@ -33,13 +33,13 @@ def generate_flower_info(flower_name, flower_info_dict, gpt2_pipeline):
 # Function to load flower image
 # Function to load flower image from a public URL
 def load_flower_image(flower_name):
-    base_url = "https://raw.githubusercontent.com/ImrulNYC/Flower_power/main/data/Flower_images/"
+    base_url = "https://github.com/ImrulNYC/flower-power/tree/cb983695c147e0a3c36e09eeb7e119ce418fdefc/data/Flower_images/"
     formatted_name = flower_name.replace(' ', '_').lower()
     image_path_with_color = f"{base_url}{formatted_name}.jpg"
     image_path_without_color = f"{base_url}{formatted_name.split('_')[-1]}.jpg"
     image_path_alternative = f"{base_url}{formatted_name.split('_')[-1]}_{formatted_name.split('_')[0]}.jpg"
 
-    # Check if the image URL is valid using requests
+   
     try:
         response = requests.head(image_path_with_color)
         if response.status_code == 200:
@@ -83,7 +83,6 @@ def developer_info():
                 <li><strong>Developer 2</strong>: <a href='https://www.linkedin.com/in/developer2' target='_blank'>LinkedIn Profile</a></li>
                 <li><strong>Developer 3</strong>: <a href='https://www.linkedin.com/in/developer3' target='_blank'>LinkedIn Profile</a></li>
                 <li><strong>Developer 4</strong>: <a href='https://www.linkedin.com/in/developer4' target='_blank'>LinkedIn Profile</a></li>
-                
             </ul>
         </div>
         """,
