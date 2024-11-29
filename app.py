@@ -3,19 +3,18 @@ import pandas as pd
 import requests
 import streamlit as st
 import re
-from io import StringIO
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline
 
 # Function to load the dataset from the local data folder
 @st.cache_data
 def load_dataset_from_local():
-    dataset_path = "data/language-of-flowers.csv"
+    dataset_path = os.path.join(os.path.dirname(__file__), "data/language-of-flowers.csv")
     try:
         data = pd.read_csv(dataset_path, quotechar='"', encoding='utf-8-sig', on_bad_lines='skip')
         data.columns = data.columns.str.strip()  
         return data
     except FileNotFoundError:
-        st.error("Dataset file not found. Please ensure the 'language-of-flowers.csv' file is present in the 'data' folder.")
+        st.error("Dataset file not found.")
         return None
     except pd.errors.ParserError as e:
         st.error(f"Error during dataset parsing: {e}")
@@ -32,29 +31,24 @@ def generate_flower_info(flower_name, flower_info_dict, gpt2_pipeline):
 
 # Function to load flower image
 def load_flower_image(flower_name):
-    base_url = "data/Flower_images/"
+    base_url = "https://raw.githubusercontent.com/ImrulNYC/flower-power/main/data/Flower_images/"
     formatted_name = flower_name.replace(' ', '_').lower()
-    image_path_with_color = f"{base_url}{formatted_name}.jpg"
-    image_path_without_color = f"{base_url}{formatted_name.split('_')[-1]}.jpg"
-    image_path_alternative = f"{base_url}{formatted_name.split('_')[-1]}_{formatted_name.split('_')[0]}.jpg"
-
+    image_url_with_color = f"{base_url}{formatted_name}.jpg"
+    image_url_without_color = f"{base_url}{formatted_name.title()}.jpg"
+    
     try:
-        response = requests.head(image_path_with_color)
+        response = requests.head(image_url_with_color)
         if response.status_code == 200:
-            return image_path_with_color
-        response = requests.head(image_path_alternative)
+            return image_url_with_color
+        response = requests.head(image_url_without_color)
         if response.status_code == 200:
-            return image_path_alternative
-        response = requests.head(image_path_without_color)
-        if response.status_code == 200:
-            return image_path_without_color
+            return image_url_without_color
     except requests.RequestException:
         return None
 
     return None
 
 # Main app code
-
 def developer_info():
     st.markdown(
         """
@@ -86,6 +80,7 @@ def developer_info():
         """,
         unsafe_allow_html=True
     )
+
 def streamlit_app():
     # Apply custom styles for a fancy UI
     st.markdown(
@@ -128,32 +123,32 @@ def streamlit_app():
     )
 
     st.markdown("<div class='main-title'>Flower Power </div>", unsafe_allow_html=True)
-    st.markdown("<div class='sub-title'>.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sub-title'>Welcome to the Language of Flowers, Flower Recognition App.</div>", unsafe_allow_html=True)
 
-            # Add flower recognition options
+    # Two model options for flower recognition
     col1, col2 = st.columns(2)
     with col1:
         st.markdown(
-        """
-        <a href="https://example.com/pre-trained-flower-recognition" target="_blank">
-            <button style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; text-decoration: underline;">
-                Pre-trained Flower Recognition
-            </button>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
+            """
+            <a href="re-trained-flower-recognition" target="_blank">
+                <button style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; text-decoration: underline;">
+                    Pre-trained Flower Recognition
+                </button>
+            </a>
+            """,
+            unsafe_allow_html=True
+        )
     with col2:
         st.markdown(
-        """
-        <a href="https://example.com/flower-recognition-from-scratch" target="_blank">
-            <button style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; text-decoration: underline;">
-                Flower Recognition from Scratch
-            </button>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
+            """
+            <a href="flower-recognition-from-scratch" target="_blank">
+                <button style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 5px; cursor: pointer; text-decoration: underline;">
+                    Flower Recognition from Scratch
+                </button>
+            </a>
+            """,
+            unsafe_allow_html=True
+        )
 
     # Load dataset from local file
     data = load_dataset_from_local()
@@ -162,7 +157,6 @@ def streamlit_app():
         data['Flower'] = data['Color'].fillna('') + ' ' + data['Flower']
         flower_info_dict = dict(zip(data['Flower'].str.strip().str.lower(), data['Meaning']))
         meaning_info_dict = dict(zip(data['Meaning'].str.strip().str.lower(), data['Flower']))
-        st.markdown("<div class='info-box' style='background-color: #ffecb3; border-color: #ffb300;'>Dataset loaded successfully.</div>", unsafe_allow_html=True)
 
         # Initialize GPT-2 for text generation
         gpt2_model = GPT2LMHeadModel.from_pretrained("gpt2")
@@ -172,7 +166,7 @@ def streamlit_app():
         # User input to get flower name with autocomplete suggestion
         flower_names = list(flower_info_dict.keys())
         flower_name = st.selectbox("Enter a flower name (e.g., 'Red Rose'):", options=["None"] + sorted(flower_names), index=0, key='flower').strip().lower()
-        
+
         # Display information for the selected flower name
         if flower_name != "none":
             if flower_name in flower_info_dict:
@@ -190,12 +184,11 @@ def streamlit_app():
                 )
             else:
                 st.markdown(f"<div class='info-box' style='background-color: #ffccbc; border-color: #ff7043;'>Sorry, we don't have information on the flower: {flower_name.title()}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='info-box' style='background-color: #ffccbc; border-color: #ff7043;'>Sorry, we don't have information on the flower: {flower_name.title()}</div>", unsafe_allow_html=True)
 
         # User input to get meaning with autocomplete suggestion
         meanings = list(meaning_info_dict.keys())
         meaning = st.selectbox("Enter a meaning to find the flower:", options=["None"] + sorted(meanings), index=0, key='meaning').strip().lower()
-        
+
         # Display information for the selected meaning
         if meaning != "none":
             if meaning in meaning_info_dict:
