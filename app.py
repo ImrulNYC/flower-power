@@ -31,17 +31,28 @@ def generate_flower_info(flower_name, flower_info_dict, gpt2_pipeline):
     return flower_name, flower_description, limited_output
 
 # Function to load flower image
+# Function to load flower image from a public URL
 def load_flower_image(flower_name):
+    base_url = "https://raw.githubusercontent.com/ImrulNYC/Flower_power/main/data/Flower_images/"
     formatted_name = flower_name.replace(' ', '_').lower()
-    image_path_with_color = f"data/Flower_images/{formatted_name}.jpg"
-    image_path_without_color = f"data/Flower_images/{formatted_name.split('_')[-1]}.jpg"
-    image_path_alternative = f"data/Flower_images/{formatted_name.split('_')[-1]}_{formatted_name.split('_')[0]}.jpg"
-    if os.path.exists(image_path_with_color):
-        return image_path_with_color
-    elif os.path.exists(image_path_alternative):
-        return image_path_alternative
-    elif os.path.exists(image_path_without_color):
-        return image_path_without_color
+    image_path_with_color = f"{base_url}{formatted_name}.jpg"
+    image_path_without_color = f"{base_url}{formatted_name.split('_')[-1]}.jpg"
+    image_path_alternative = f"{base_url}{formatted_name.split('_')[-1]}_{formatted_name.split('_')[0]}.jpg"
+
+    # Check if the image URL is valid using requests
+    try:
+        response = requests.head(image_path_with_color)
+        if response.status_code == 200:
+            return image_path_with_color
+        response = requests.head(image_path_alternative)
+        if response.status_code == 200:
+            return image_path_alternative
+        response = requests.head(image_path_without_color)
+        if response.status_code == 200:
+            return image_path_without_color
+    except requests.RequestException:
+        return None
+
     return None
 
 
